@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7.0.11-alpine
+    ports:
+    - 6381:6380
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: uspos
+    ports:
+      - "5432:5432"
+
+  api:
+    build: .
+    command: [ "make", "start-api" ]
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      - db
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8000
+
+      # ENVIRONMENT: ${ENVIRONMENT}
+      # SECRET_KEY: ${SECRET_KEY}
+      # DB_MASTER_NAME: uspos
+      # DB_MASTER_USERNAME: ${DB_MASTER_USERNAME}
+      # DB_MASTER_PASSWORD: ${DB_MASTER_PASSWORD}
+      # DB_MASTER_HOST: ${DB_MASTER_HOST}
+      # DB_MASTER_PORT: ${DB_MASTER_PORT}
+
+      # DOGS_API_URL: ${DOGS_API_URL}
+      # DOGS_API_KEY: ${DOGS_API_KEY}
+
+      # MINIO_HOST: ${MINIO_HOST}
+      # MINIO_PORT: ${MINIO_PORT}
+      # MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      # MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      # MINIO_API: ${MINIO_API}
+      # MINIO_PATH: ${MINIO_PATH}
+      # MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
+      # AWS_S3_ENDPOINT_URL: ${AWS_S3_ENDPOINT_URL}
+      # MINIO_PUBLIC_DOMAIN: ${MINIO_PUBLIC_DOMAIN}
+
+      # CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      # CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+
+  quiz_anwser_pg_consumer:
+    # container_name: worker1
+    build: .
+    command: [ "make", "run-quiz_anwser_pg_consumer" ]
+
+    depends_on:
+      - redis
+      - api
+
+  quiz_score_redis_consumer:
+    # container_name: worker1
+    build: .
+    command: [ "make", "run-quiz_score_redis_consumer" ]
+
+    depends_on:
+      - redis
+      - api
+
+volumes:
+  minio-data:
